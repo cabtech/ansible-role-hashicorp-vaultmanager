@@ -1,6 +1,6 @@
 ---
 
-- name: 'initialise Vault'
+- name: 'initialise Vault (solo)'
   command: /usr/local/bin/init-vault.sh
   when:
   - vault_role == 'server'
@@ -66,9 +66,11 @@
   tags:
   - ct-vaultmanager
 
-- name: 'prepare the Vault'
+- name: 'prepare the Vault (solo)'
   command: /usr/local/bin/prepare-vault.sh
-  when: vault_role == 'server'
+  when:
+  - vault_role == 'server'
+  - "'vault_solo' not in group_names"
   register: reg_vault_prepare
   become: true
   changed_when: reg_vault_prepare.rc != 99
@@ -78,7 +80,7 @@
   tags:
   - ct-vaultmanager
 
-- name: 'fetch Nomad file'
+- name: 'fetch Nomad file (solo)'
   fetch:
     src: /var/tmp/vault/vars-pri-nomad.yml
     dest: vars-pri-nomad.yml

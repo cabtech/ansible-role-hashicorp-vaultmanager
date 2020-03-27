@@ -66,6 +66,30 @@
   tags:
   - ct-vaultmanager
 
+- name: 'prepare the Vault'
+  command: /usr/local/bin/prepare-vault.sh
+  when: vault_role == 'server'
+  register: reg_vault_prepare
+  become: true
+  changed_when: reg_vault_prepare.rc != 99
+  failed_when:
+  - reg_vault_prepare.rc != 0
+  - reg_vault_prepare.rc != 99
+  tags:
+  - ct-vaultmanager
+
+- name: 'fetch Nomad file'
+  fetch:
+    src: /var/tmp/vault/vars-pri-nomad.yml
+    dest: vars-pri-nomad.yml
+    flat: true
+  when:
+  - vault_role == 'server'
+  - "'vault_solo' in group_names"
+  become: true
+  tags:
+  - ct-vaultmanager
+
 - name: 'clean up temp files'
   file:
     state: absent

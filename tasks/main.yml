@@ -1,7 +1,7 @@
 ---
 
-- name: 'initialise Vault (solo)'
-  command: /usr/local/bin/init-vault.sh
+- name: 'Initialise Vault (solo)'
+  ansible.builtin.command: /usr/local/bin/init-vault.sh
   when:
   - vault_role == 'server'
   - "'vault_solo' in group_names"
@@ -12,50 +12,46 @@
   - reg_vault_init.rc != 0
   - reg_vault_init.rc != 99
   become: true
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'fetch files from primary (1/2)'
-  fetch:
-    src: /var/tmp/vault/keys
+- name: 'Fetch files from primary (1/2)'
+  ansible.builtin.fetch:
     dest: /var/tmp/vault-keys
     flat: true
+    src: /var/tmp/vault/keys
   when:
   - vault_role == 'server'
   - "'vault_solo' in group_names"
   become: true
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'fetch files from primary (2/2)'
-  fetch:
-    src: /var/tmp/vault/token
+- name: 'Fetch files from primary (2/2)'
+  ansible.builtin.fetch:
     dest: /var/tmp/vault-token
     flat: true
+    src: /var/tmp/vault/token
   when:
   - vault_role == 'server'
   - "'vault_solo' in group_names"
   become: true
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'push files to secondaries'
-  copy:
-    src: /var/tmp/vault-keys
+- name: 'Push files to secondaries'
+  ansible.builtin.copy:
     dest: /var/tmp/vault/keys
     group: root
     mode: '0600'
     owner: root
+    src: /var/tmp/vault-keys
   no_log: true
   when:
   - vault_role == 'server'
   - "'vault_solo' not in group_names"
   become: true
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'unseal the Vault'
-  command: /usr/local/bin/unseal-vault.sh
+- name: 'Unseal the Vault'
+  ansible.builtin.command: /usr/local/bin/unseal-vault.sh
   when: vault_role == 'server'
   register: reg_vault_unseal
   become: true
@@ -63,11 +59,10 @@
   failed_when:
   - reg_vault_unseal.rc != 0
   - reg_vault_unseal.rc != 99
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'prepare the Vault (solo)'
-  command: /usr/local/bin/prepare-vault.sh
+- name: 'Prepare the Vault (solo)'
+  ansible.builtin.command: /usr/local/bin/prepare-vault.sh
   when:
   - vault_role == 'server'
   - "'vault_solo' not in group_names"
@@ -77,32 +72,29 @@
   failed_when:
   - reg_vault_prepare.rc != 0
   - reg_vault_prepare.rc != 99
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'fetch Nomad file (solo)'
-  fetch:
-    src: /var/tmp/vault/vars-pri-nomad.yml
+- name: 'Fetch Nomad file (solo)'
+  ansible.builtin.fetch:
     dest: vars-pri-nomad.yml
     flat: true
+    src: /var/tmp/vault/vars-pri-nomad.yml
   when:
   - vault_role == 'server'
   - "'vault_solo' in group_names"
   become: true
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
-- name: 'clean up temp files'
-  file:
+- name: 'Clean up temp files'
+  ansible.builtin.file:
+    path: '{{ item }}'
     state: absent
-    path: '{{item}}'
   loop: ['/var/tmp/vault/keys', '/var/tmp/vault/token']
   become: true
   when:
   - vault_role == 'server'
   - "'vault_solo' not in group_names"
-  tags:
-  - ct-vaultmanager
+  tags: ["ct-vaultmanager"]
 
 # --------------------------------
 ...
